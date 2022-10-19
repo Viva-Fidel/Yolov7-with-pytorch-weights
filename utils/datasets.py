@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 
+
 class LoadWebcam:
     def __init__(self, pipe='0', img_size=640, stride=32):
         self.img_size = img_size
@@ -9,6 +10,10 @@ class LoadWebcam:
         self.pipe = pipe
         self.cap = cv2.VideoCapture(pipe)
         self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 3)
+        self.fps = self.cap.get(cv2.CAP_PROP_FPS)
+        print(self.fps)
+        self.width = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        self.height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
     def __iter__(self):
         self.count = -1
@@ -16,41 +21,25 @@ class LoadWebcam:
 
     def __next__(self):
         self.count += 1
+        self.cap.grab()
+        ret_val, img0 = self.cap.read()
+
         if cv2.waitKey(1) == ord('q'):
             self.cap.release()
-            cv2.destroyAllWindows()
             raise StopIteration
-
-        if self.pipe == 0:
-            ret_val, img0 = self.cap.read()
-            img0 = cv2.flip(img0, 1)
-        else:
-            n = 0
-            while True:
-                n += 1
-                self.cap.grab()
-                if n % 30 == 0:
-                    ret_val, img0 = self.cap.retrieve()
-                    if ret_val:
-                        break
+            cv2.destroyAllWindows()
 
         assert ret_val, f'Camera Error {self.pipe}'
-        img_path = 'webcam.jpg'
-        print(f'webcam {self.count}: ', end='')
 
         img = letterbox(img0, self.img_size, stride=self.stride)[0]
 
         img = img[:, :, ::-1].transpose(2, 0, 1)
         img = np.ascontiguousarray(img)
 
-        return img_path, img, img0, None
-
-    def __len__(self):
-        return 0
+        return img, img0
 
 
 def letterbox(img, new_shape=(640, 640), color=(114, 114, 114), auto=True, scaleFill=False, scaleup=True, stride=32):
-
     shape = img.shape[:2]
     if isinstance(new_shape, int):
         new_shape = (new_shape, new_shape)
@@ -78,6 +67,3 @@ def letterbox(img, new_shape=(640, 640), color=(114, 114, 114), auto=True, scale
     left, right = int(round(dw - 0.1)), int(round(dw + 0.1))
     img = cv2.copyMakeBorder(img, top, bottom, left, right, cv2.BORDER_CONSTANT, value=color)
     return img, ratio, (dw, dh)
-
-
-

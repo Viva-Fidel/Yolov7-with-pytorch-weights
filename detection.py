@@ -16,9 +16,9 @@ class Detection:
     def __init__(self):
         # Press 'q' to quit video
         # Write direction to your pt weights
-        self.weights = 'best.pt'
+        self.weights = 'your_weights.pt'
         # Write direction to your video
-        self.source = 'test3.mp4'
+        self.source = 'your_video.mp4'
 
     def detect(self):
         set_logging()
